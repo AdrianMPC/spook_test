@@ -1,11 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://ddu2n74mgfod5"]
+[gd_scene load_steps=7 format=3 uid="uid://ddu2n74mgfod5"]
 
 [ext_resource type="Script" uid="uid://jb3grtwqwaeo" path="res://Scripts/entities/player/ent_player_main.gd" id="1_sha18"]
 [ext_resource type="Script" uid="uid://c1wc16o2xg2vi" path="res://Scripts/entities/player/ent_player_movement.gd" id="2_f3ap2"]
+[ext_resource type="Script" uid="uid://b1jmvebmypqxd" path="res://Scripts/entities/player/ent_player_footstep_timing.gd" id="3_q0ify"]
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_5w58x"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_sha18"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_kp1lr"]
 
 [node name="ent_player" type="Node3D"]
 
@@ -14,20 +17,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 script = ExtResource("1_sha18")
 MovementManager = NodePath("../MovementManager")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D"]
+[node name="BodyModel" type="MeshInstance3D" parent="CharacterBody3D"]
 mesh = SubResource("CapsuleMesh_5w58x")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+[node name="BodyCollision" type="CollisionShape3D" parent="CharacterBody3D"]
 shape = SubResource("CapsuleShape3D_sha18")
 debug_color = Color(0, 0.53040767, 0.8966292, 0.41960785)
 
-[node name="MovementManager" type="Node3D" parent="." node_paths=PackedStringArray("Controller_Instance", "PlayerCollision", "PlayerMesh")]
+[node name="MovementManager" type="Node3D" parent="." node_paths=PackedStringArray("Controller_Instance", "PlayerCollision", "PlayerMesh", "StairsBelowRayCast3D", "StairsAheadRayCast3D", "HeadBobEffectNode", "ShapeCast")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24883902, 0)
 script = ExtResource("2_f3ap2")
 Controller_Instance = NodePath("../CharacterBody3D")
-PlayerCollision = NodePath("../CharacterBody3D/CollisionShape3D")
-PlayerMesh = NodePath("../CharacterBody3D/MeshInstance3D")
+PlayerCollision = NodePath("../CharacterBody3D/BodyCollision")
+PlayerMesh = NodePath("../CharacterBody3D/BodyModel")
+StairsBelowRayCast3D = NodePath("../StairsBelowRC3D")
+StairsAheadRayCast3D = NodePath("../StairsAheadRC3D")
+HeadBobEffectNode = NodePath("../HeadBob")
+ShapeCast = NodePath("../InteracterNode")
 
 [node name="StairsAheadRC3D" type="RayCast3D" parent="."]
 target_position = Vector3(0, -0.75, 0)
 
 [node name="StairsBelowRC3D" type="RayCast3D" parent="."]
+
+[node name="HeadBob" type="Node3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3382087, 0)
+script = ExtResource("3_q0ify")
+
+[node name="InteracterNode" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.3647821, 0)
+shape = SubResource("BoxShape3D_kp1lr")
+target_position = Vector3(1.1, 0, 0)
+max_results = 2
+debug_shape_custom_color = Color(1, 0, 0, 1)

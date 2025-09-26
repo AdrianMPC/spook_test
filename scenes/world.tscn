@@ -1,6 +1,18 @@
-[gd_scene load_steps=4 format=3 uid="uid://blowaee1ukgpi"]
+[gd_scene load_steps=8 format=3 uid="uid://blowaee1ukgpi"]
 
 [ext_resource type="PackedScene" uid="uid://ddu2n74mgfod5" path="res://scenes/ent_player.tscn" id="1_nnsk1"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_nnsk1"]
+sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+ground_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
+
+[sub_resource type="Sky" id="Sky_rwgxs"]
+sky_material = SubResource("ProceduralSkyMaterial_nnsk1")
+
+[sub_resource type="Environment" id="Environment_4wyf3"]
+background_mode = 2
+sky = SubResource("Sky_rwgxs")
+tonemap_mode = 2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e5uuo"]
 albedo_color = Color(0.46517676, 0.23281348, 0.90231025, 1)
@@ -9,11 +21,30 @@ roughness = 0.0
 [sub_resource type="PlaneMesh" id="PlaneMesh_e5uuo"]
 material = SubResource("StandardMaterial3D_e5uuo")
 
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_nnsk1"]
+points = PackedVector3Array(1.0158731, 0.015873017, 1.0158731, -1.0158731, -0.015873017, -1.0158731, -1.0158731, 0.015873017, -1.0158731, 1.0158731, -0.015873017, -1.0158731, -1.0158731, -0.015873017, 1.0158731, -1.0158731, 0.015873017, 1.0158731, 1.0158731, 0.015873017, -1.0158731, 1.0158731, -0.015873017, 1.0158731)
+
 [node name="world" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_4wyf3")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.8660254, -0.43301278, 0.25, 0, 0.49999997, 0.86602545, -0.50000006, 0.75, -0.43301266, 0, 0, 0)
+shadow_enabled = true
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 transform = Transform3D(6.1464458, 0, 0, 0, 6.1464458, 0, 0, 0, 6.1464458, 0, 0, 0)
 mesh = SubResource("PlaneMesh_e5uuo")
 
+[node name="StaticBody3D" type="StaticBody3D" parent="MeshInstance3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/StaticBody3D"]
+shape = SubResource("ConvexPolygonShape3D_nnsk1")
+
 [node name="ent_player" parent="." instance=ExtResource("1_nnsk1")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1493468, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(-0.56535125, 0.24764162, -0.7867984, 0.19479258, 0.9669717, 0.1643829, 0.80151975, -0.060328413, -0.59491736, -5.7933373, 2.249423, -3.7286797)
+fov = 70.0
