@@ -40,16 +40,21 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity");
 #@export var CameraSmoothingModule: CPlayerCameraSmoothing;
 #@export var MoveableHeadModule: Node3D;
 @export var ShapeCast: ShapeCast3D;
-"""
+
+@export_category("RS_RELATED")
+@export var FRONT_IS_POS_Z := false      # true si tu mesh "mira" a +Z; false si mira a -Z (estándar Godot).
+@export var SHAPECAST_DISTANCE := 1.2    # longitud del cast hacia delante del personaje
+@export var SHAPECAST_LIFT := 0.0   
+
 @export_category("Ladder")
 @export var climb_speed: float = 5.0;
 """
 #const CROUCH_TRANSLATE: float = 0.7;
 #const CROUCH_JUMP_ADD: float = CROUCH_TRANSLATE * 0.9;
-
+"""
 #var is_crouch: bool = false;
 var is_sprinting: bool = false;
-@onready var _original_capsule_height = PlayerCollision.shape.height;
+#@onready var _original_capsule_height = PlayerCollision.shape.height;
 
 var _snapped_to_stairs_last_frame: bool = false;
 var _last_frame_was_onfloor: float = -INF;
@@ -58,21 +63,50 @@ var cam_aligned_wish_dir = Vector3.ZERO;
 
 ##var headbob_time: float = 0.0;
 
-var _cur_ladder_climbing: Area3D = null;
+#var _cur_ladder_climbing: Area3D = null;
+func _ready() -> void:
+	# Configurar ShapeCast inicial
+	if ShapeCast:
+		# Orientación/posición local base
+		ShapeCast.rotation_degrees = Vector3.ZERO
+		ShapeCast.position.y = SHAPECAST_LIFT
+		# Target (local) hacia adelante según el “frente” del modelo
+		ShapeCast.target_position = Vector3(0, 0, SHAPECAST_DISTANCE if  FRONT_IS_POS_Z else -SHAPECAST_DISTANCE)
+		ShapeCast.enabled = true
 
 func _main_movement_process(delta: float) -> void:
 	if Controller_Instance.is_on_floor(): 
 		_last_frame_was_onfloor = Engine.get_physics_frames()
-	var input_dir = Input.get_vector("left", "right", "forward", "backwards").normalized();
-	wish_dir = Controller_Instance.global_transform.basis * Vector3(input_dir.x ,0, input_dir.y);
-	
+
+		# Entrada en plano XZ (mantén tus acciones: "left","right","forward","backwards")
+		var input_dir := Input.get_vector("left", "right", "forward", "backwards").normalized()
+		# Dirección deseada en espacio del controller (si quieres relativo a cámara, usa basis de la cámara)
+		wish_dir = Controller_Instance.global_transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)
+
+		# --- GIRO INSTANTÁNEO DEL VISUAL Y ALINEACIÓN DEL SHAPECAST ---
+		if wish_dir.length_squared() > 0.0:
+			var flat := Vector3(wish_dir.x, 0.0, wish_dir.z).normalized()
+			# Yaw instantáneo (no tocamos el cuerpo físico)
+			var yaw := atan2(flat.x, flat.z)
+			if PlayerMesh:
+				PlayerMesh.rotation.y = yaw
+			# Hacer que el ShapeCast siga la misma dirección:
+			if ShapeCast:
+				# 1) Rotamos el shape_cast para que su -Z/+Z local apunte al frente visual
+				ShapeCast.rotation.y = yaw
+				# 2) Aseguramos su target local hacia el frente correcto
+				ShapeCast.target_position = Vector3(0, 0, SHAPECAST_DISTANCE if  FRONT_IS_POS_Z else -SHAPECAST_DISTANCE)	
+				# (Opcional) colocarlo centrado/ligeramente adelantado en el personaje:
+				# shape_cast.position = Vector3(0, SHAPECAST_LIFT, 0)
+
+	# --- FÍSICA/MOVIMIENTO (no rotamos el CharacterBody3D) ---
 	if Controller_Instance.is_on_floor() or _snapped_to_stairs_last_frame:
-		_handle_ground_physics(delta);
+		_handle_ground_physics(delta)
 	else:
-		_handle_air_physics(delta);
+		_handle_air_physics(delta)
 			
 	if not _snap_up_to_stairs_check(delta):
-		_push_away_rigid_bodies();
+		_push_away_rigid_bodies()
 		Controller_Instance.move_and_slide()
 		_snap_down_to_stairs_check()
 	
